@@ -170,7 +170,7 @@
         <button id="analyzeButton">Duyguyu Analiz Et</button>
     </div>
     <script>
-        const API_ENDPOINT = (window.KITTY_SENTIMENT_API || "").trim();
+        const API_ENDPOINT = (window.KITTY_SENTIMENT_API || "http://127.0.0.1:8000/analyze").trim();
 
         const catEl = document.querySelector(".cat");
         const speechEl = document.querySelector(".speech");
