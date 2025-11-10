@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kitty Game - Kedinin Öpücüğü</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: radial-gradient(circle at top, #ffe2f3 0%, #ffeef8 45%, #fffcff 100%);
+        }
+
+        h1 {
+            color: #ff4f81;
+            margin-bottom: 8px;
+        }
+
+        .cat {
+            font-size: 92px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .cat:hover {
+            transform: scale(1.05);
+        }
+
+        .speech {
+            margin-top: 12px;
+            font-size: 20px;
+            min-height: 24px;
+            color: #ff4f81;
+        }
+
+        .kiss {
+            position: absolute;
+            font-size: 40px;
+            will-change: transform, opacity;
+            animation: blow 1.1s ease forwards;
+        }
+
+        @keyframes blow {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            60% {
+                transform: translate(160px, -180px) scale(1.4);
+                opacity: 0.9;
+            }
+            100% {
+                transform: translate(320px, -280px) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        .controls {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        input, button {
+            border-radius: 6px;
+            border: 1px solid #ff90b7;
+            padding: 10px 14px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #ff4f81;
+            color: #fff;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .scene {
+            position: relative;
+            width: 480px;
+            height: 360px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .target {
+            position: absolute;
+            right: 10%;
+            bottom: 12%;
+            font-size: 48px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mırmır'ın Öpücüğü</h1>
+    <div class="speech"></div>
+    <div class="scene">
+        <div class="cat" role="img" aria-label="Kedi">🐱</div>
+        <div class="target" role="img" aria-label="Sahip">🧑</div>
+    </div>
+    <div class="controls">
+        <input id="targetName" type="text" placeholder="Öpücük gitsin..." />
+        <button id="kissButton">Öpücük Gönder</button>
+    </div>
+    <script>
+        const catEl = document.querySelector(".cat");
+        const speechEl = document.querySelector(".speech");
+        const targetInput = document.getElementById("targetName");
+        const button = document.getElementById("kissButton");
+        const scene = document.querySelector(".scene");
+        const targetEl = document.querySelector(".target");
+
+        const kisses = ["💋", "😘", "😽", "😚"];
+        const hearts = ["❤", "💖", "💘", "💕", "💓"];
+
+        const createKiss = (emoji) => {
+            const kiss = document.createElement("span");
+            kiss.className = "kiss";
+            kiss.textContent = emoji;
+            kiss.style.left = Math.random() * 60 + 20 + "%";
+            kiss.style.bottom = "80px";
+            scene.appendChild(kiss);
+            kiss.addEventListener("animationend", () => kiss.remove());
+        };
+
+        const blowKiss = () => {
+            const name = targetInput.value.trim() || "sahip";
+            const kiss = kisses[Math.floor(Math.random() * kisses.length)];
+            const heart = hearts[Math.floor(Math.random() * hearts.length)];
+
+            speechEl.textContent = `Mırmır: ${name}, sana kocaman bir öpücük! ${kiss}${heart}`;
+            targetEl.style.opacity = 1;
+            targetEl.textContent = name === "sahip" ? "🧑" : name;
+
+            createKiss(`${kiss}${heart}`);
+        };
+
+        button.addEventListener("click", blowKiss);
+        catEl.addEventListener("click", blowKiss);
+    </script>
+</body>
+</html>
+
