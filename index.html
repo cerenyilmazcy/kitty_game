@@ -84,13 +84,58 @@
             transform: scale(0.98);
         }
 
-        .scene {
+        .scene, .sentiment-card {
             position: relative;
             width: 480px;
             height: 360px;
             display: flex;
             align-items: flex-end;
             justify-content: center;
+        }
+
+        .sentiment-card {
+            flex-direction: column;
+            align-items: stretch;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 18px;
+            padding: 20px 24px;
+            gap: 14px;
+            box-shadow: 0 12px 40px rgba(255, 79, 129, 0.18);
+            height: auto;
+            margin-top: 28px;
+        }
+
+        .sentiment-card h2 {
+            font-size: 22px;
+            color: #ff4f81;
+            margin: 0;
+            text-align: center;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 90px;
+            max-height: 200px;
+        }
+
+        .reaction {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-height: 80px;
+            color: #ff4f81;
+            text-align: center;
+        }
+
+        .reaction-emoji {
+            font-size: 64px;
+        }
+
+        .rules {
+            font-size: 13px;
+            color: #a05a7c;
+            text-align: center;
         }
 
         .target {
@@ -114,6 +159,16 @@
         <input id="targetName" type="text" placeholder="Öpücük gitsin..." />
         <button id="kissButton">Öpücük Gönder</button>
     </div>
+    <div class="sentiment-card">
+        <h2>Mırmır Duygu Analizi</h2>
+        <p class="rules">Bir cümle yaz, Mırmır'ın ruh halini gör 🐾</p>
+        <textarea id="sentimentInput" placeholder="Bugün kendini nasıl hissediyorsun?"></textarea>
+        <div class="reaction">
+            <div class="reaction-emoji" id="reactionEmoji">😺</div>
+            <div id="reactionMessage">Mırmır seni dinliyor...</div>
+        </div>
+        <button id="analyzeButton">Duyguyu Analiz Et</button>
+    </div>
     <script>
         const catEl = document.querySelector(".cat");
         const speechEl = document.querySelector(".speech");
@@ -121,9 +176,29 @@
         const button = document.getElementById("kissButton");
         const scene = document.querySelector(".scene");
         const targetEl = document.querySelector(".target");
+        const sentimentInput = document.getElementById("sentimentInput");
+        const analyzeButton = document.getElementById("analyzeButton");
+        const reactionEmojiEl = document.getElementById("reactionEmoji");
+        const reactionMessageEl = document.getElementById("reactionMessage");
 
         const kisses = ["💋", "😘", "😽", "😚"];
         const hearts = ["❤", "💖", "💘", "💕", "💓"];
+        const positiveWords = [
+            "mutlu", "harika", "iyi", "sevgi", "seviyorum", "başarılı", "pozitif",
+            "teşekkür", "şanslı", "güzel", "harikayım", "neşeli", "enerjik", "şahane",
+            "gülümsüyorum", "süper", "rahat"
+        ];
+        const negativeWords = [
+            "üzgün", "kötü", "yalnız", "nefret", "sinirli", "kızgın", "yorgun",
+            "mutsuz", "korkuyorum", "üzüldüm", "canım sıkkın", "depresif", "ağlıyorum",
+            "kaygılı", "stresli", "başarısız", "hasta"
+        ];
+
+        const neutralMessages = [
+            "Mırmır merakla dinliyor, biraz daha anlat.",
+            "Mırmır'a göre bugün dengeli bir gün, birlikte keyifli zaman geçirelim.",
+            "Mırmır şaşkın, ama her zaman yanında!"
+        ];
 
         const createKiss = (emoji) => {
             const kiss = document.createElement("span");
@@ -147,8 +222,63 @@
             createKiss(`${kiss}${heart}`);
         };
 
+        const normalizeText = (text) =>
+            text
+                .toLocaleLowerCase("tr-TR")
+                .replace(/[^\p{L}\s]/gu, " ");
+
+        const analyzeSentiment = () => {
+            const text = sentimentInput.value.trim();
+            if (!text) {
+                reactionEmojiEl.textContent = "😼";
+                reactionMessageEl.textContent = "Önce birkaç kelime yaz, Mırmır seni dinliyor.";
+                return;
+            }
+
+            const normalized = normalizeText(text);
+            let positiveScore = 0;
+            let negativeScore = 0;
+
+            positiveWords.forEach((word) => {
+                const pattern = new RegExp(`\\b${word}\\b`, "gi");
+                positiveScore += (normalized.match(pattern) || []).length;
+            });
+
+            negativeWords.forEach((word) => {
+                const pattern = new RegExp(`\\b${word}\\b`, "gi");
+                negativeScore += (normalized.match(pattern) || []).length;
+            });
+
+            if (positiveScore === 0 && negativeScore === 0) {
+                reactionEmojiEl.textContent = "😽";
+                reactionMessageEl.textContent =
+                    neutralMessages[Math.floor(Math.random() * neutralMessages.length)];
+                return;
+            }
+
+            if (positiveScore >= negativeScore) {
+                reactionEmojiEl.textContent = "😺";
+                reactionMessageEl.textContent = "Mırmır çok mutlu oldu! Böyle devam et 💖";
+            } else if (negativeScore - positiveScore >= 2) {
+                reactionEmojiEl.textContent = "🙀";
+                reactionMessageEl.textContent =
+                    "Mırmır endişelendi. Sana kocaman bir sarılma yolluyor 🤗";
+            } else {
+                reactionEmojiEl.textContent = "😼";
+                reactionMessageEl.textContent =
+                    "Mırmır biraz gerginlik sezdi. Beraber derin nefes alalım.";
+            }
+        };
+
         button.addEventListener("click", blowKiss);
         catEl.addEventListener("click", blowKiss);
+        analyzeButton.addEventListener("click", analyzeSentiment);
+        sentimentInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                analyzeSentiment();
+                event.preventDefault();
+            }
+        });
     </script>
 </body>
 </html>
