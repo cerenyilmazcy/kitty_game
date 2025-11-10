@@ -170,6 +170,8 @@
         <button id="analyzeButton">Duyguyu Analiz Et</button>
     </div>
     <script>
+        const API_ENDPOINT = (window.KITTY_SENTIMENT_API || "").trim();
+
         const catEl = document.querySelector(".cat");
         const speechEl = document.querySelector(".speech");
         const targetInput = document.getElementById("targetName");
@@ -186,18 +188,93 @@
         const positiveWords = [
             "mutlu", "harika", "iyi", "sevgi", "seviyorum", "başarılı", "pozitif",
             "teşekkür", "şanslı", "güzel", "harikayım", "neşeli", "enerjik", "şahane",
-            "gülümsüyorum", "süper", "rahat"
+            "gülümsüyorum", "süper", "rahat", "huzurluyum", "umutlu", "coşkulu",
+            "keyifli", "şükrediyorum", "aşığım", "güçlü", "minnettar"
         ];
         const negativeWords = [
             "üzgün", "kötü", "yalnız", "nefret", "sinirli", "kızgın", "yorgun",
             "mutsuz", "korkuyorum", "üzüldüm", "canım sıkkın", "depresif", "ağlıyorum",
-            "kaygılı", "stresli", "başarısız", "hasta"
+            "kaygılı", "stresli", "başarısız", "hasta", "umutsuz", "kırgınım",
+            "öfkeliyim", "bunaldım", "boğuluyorum", "bıktım", "ürkütücü", "gergin",
+            "sıkıldım"
         ];
 
         const neutralMessages = [
-            "Mırmır merakla dinliyor, biraz daha anlat.",
-            "Mırmır'a göre bugün dengeli bir gün, birlikte keyifli zaman geçirelim.",
-            "Mırmır şaşkın, ama her zaman yanında!"
+            { emoji: "😽", text: "Mırmır merakla dinliyor, biraz daha anlat." },
+            { emoji: "😺", text: "Mırmır'a göre bugün dengeli bir gün, birlikte keyifli zaman geçirelim." },
+            { emoji: "😸", text: "Mırmır şaşkın, ama her zaman yanında!" },
+            { emoji: "😼", text: "Mırmır dengeli hissediyor; hadi biraz oyun oynayalım." },
+            { emoji: "😹", text: "Mırmır biraz güldü, ama neye gülüyor karar veremedi." },
+            { emoji: "😻", text: "Mırmır kulaklarını dikti, seni dikkatle dinliyor." },
+            { emoji: "😽", text: "Mırmır hissiyatın netleşirse yardıma hazır." },
+            { emoji: "😺", text: "Mırmır, şu anki halde beraber sakin bir oyun önermek istiyor." },
+            { emoji: "😼", text: "Mırmır, günü birlikte değerlendirmek istiyor." },
+            { emoji: "😸", text: "Mırmır rahat ama ufak bir sürpriz bekliyor." }
+        ];
+
+        const positiveMessagesSoft = [
+            { emoji: "😺", text: "Mırmır çok mutlu oldu! Böyle devam et 💖" },
+            { emoji: "😹", text: "Kahkahalar havada uçuşuyor; Mırmır keyfine keyif kattı!" },
+            { emoji: "😻", text: "Mırmır'ın kalbi sevgiyle doldu, purr purr..." },
+            { emoji: "😽", text: "Mırmır iltifata karşılık bir sürü öpücük yolluyor!" },
+            { emoji: "😺", text: "Mırmır güneşlenirken seni düşünüyor, içi sıcacık." },
+            { emoji: "😸", text: "Mırmır mırıldanıyor; keyifli sözlerin onu çok rahatlattı." },
+            { emoji: "😻", text: "Mırmır, bu enerjiyi tüm arkadaşlarıyla paylaşmak istiyor!" },
+            { emoji: "😽", text: "Mırmır seni alkışlıyor, patilerini şapırdatıyor." },
+            { emoji: "😺", text: "Mırmır bir kap sütü sana ödül olarak sundu!" },
+            { emoji: "😻", text: "Mırmır gülümsedi; bu gülümseme tüm dünyayı aydınlatabilir." }
+        ];
+
+        const positiveMessagesStrong = [
+            { emoji: "😻", text: "Mırmır mutluluktan takla atıyor! Enerjin herkese yayılıyor." },
+            { emoji: "😽", text: "Kuyruk ritim tutuyor, Mırmır seni alkışlıyor! 👏" },
+            { emoji: "😹", text: "Bu kadar pozitiflik Mırmır'ı uçurdu! Ohooo!" },
+            { emoji: "😻", text: "Mırmır kalbinle dans ediyor, ritmi hissetti!" },
+            { emoji: "😽", text: "Mırmır için bugün festivalken, seni baş köşeye oturttu." },
+            { emoji: "😹", text: "Mırmırın kahkaha kutusu taştı, etrafı neşe sardı!" },
+            { emoji: "😻", text: "Güneş bile Mırmır kadar parlak değil şu an." },
+            { emoji: "😽", text: "Mırmır gururla söylüyor: 'Sen harikasın!'" },
+            { emoji: "😹", text: "Mırmır havai fişekleri başlattı, sırf senin için." },
+            { emoji: "😻", text: "Mırmır 'En Mutlu Kedi' kupasını sana ithaf etti." }
+        ];
+
+        const balancedMessages = [
+            { emoji: "😼", text: "Hissettiklerin biraz karışık, Mırmır yanında duruyor." },
+            { emoji: "😺", text: "Mırmır dengeli bir gün olduğunu düşünüyor; birlikte nefes alalım." },
+            { emoji: "😽", text: "Hem parlak hem gölgeli taraflar var; Mırmır seni destekliyor." },
+            { emoji: "😸", text: "Mırmır dengeyi korumak için seni dinliyor, dostça." },
+            { emoji: "😼", text: "Karmaşık hisler güzel; Mırmır hepsini tek tek topluyor." },
+            { emoji: "😺", text: "Mırmır iyimser taraftan bakmaya çalışıyor, sana katılıyor." },
+            { emoji: "😽", text: "Mırmır içtenlikle: 'Birlikte çay içip konuşalım mı?'" },
+            { emoji: "😸", text: "Mırmır, günün bir parça renkli bir parça gölgeli olduğuna inanıyor." },
+            { emoji: "😼", text: "Mırmır: 'Hem iyi hem zor taraflar var, seninleyim.'" },
+            { emoji: "😺", text: "Mırmır: 'Çift yönlü hisler, çift kat sarılma demek!'" }
+        ];
+
+        const negativeMessagesSoft = [
+            { emoji: "😿", text: "Mırmır hafif bir gölge sezdi. Sarılma molası verelim mi?" },
+            { emoji: "😼", text: "Mırmır minik bir gerginlik algıladı. Beraber çay içelim." },
+            { emoji: "🙀", text: "Mırmır dikkat kesildi; kendine nazik davranmayı unutma." },
+            { emoji: "😿", text: "Mırmır hafif bir bulut gördü; birlikte dağıtalım mı?" },
+            { emoji: "🙀", text: "Mırmır küçük bir ürperti hissetti, yanında durmak istiyor." },
+            { emoji: "😼", text: "Mırmır diyor ki: 'Bir nefes molası ver, ben beklerim.'" },
+            { emoji: "😿", text: "Mırmır kalbinden yumuşacık bir battaniye çıkardı, uzatıyor." },
+            { emoji: "😼", text: "Mırmır biraz tedirgin ama çözüm için plan yapıyor." },
+            { emoji: "🙀", text: "Mırmır bir fırtına kokusu aldı; güvenli bir köşe bulalım." },
+            { emoji: "😿", text: "Mırmır patisini uzattı: 'Tut ve sıkıca kavra, buradayım.'" }
+        ];
+
+        const negativeMessagesStrong = [
+            { emoji: "😭", text: "Mırmır gözlerinden yaş geldiğini hissetti; büyük sarılma gönderiyor 🤗" },
+            { emoji: "🙀", text: "Mırmır çok endişelendi. Birlikte derin nefes alıp destek bulalım." },
+            { emoji: "😿", text: "Mırmır kalbinde ağırlık hissediyor; istersen bir arkadaşını ara." },
+            { emoji: "😢", text: "Mırmır hüzünlü şarkılar söylüyor; senin yanında olmak istiyor." },
+            { emoji: "😿", text: "Mırmır için duygular çok yoğun; profesyonel destek düşünmeye ne dersin?" },
+            { emoji: "🙀", text: "Mırmır tüylerini kabarttı; yalnız olmadığını bilmeni istiyor." },
+            { emoji: "😭", text: "Mırmır gözyaşlarını beraber silmek için yanına zıplıyor." },
+            { emoji: "😢", text: "Mırmırın mırıltısı ağırlaştı; seni tekrar ayağa kaldırmak istiyor." },
+            { emoji: "😿", text: "Mırmır karanlık bir köşe hissetti; ışığı birlikte arayalım." },
+            { emoji: "😭", text: "Mırmır kocaman bir battaniye buldu, ikinizi sarıp sarmaladı." }
         ];
 
         const createKiss = (emoji) => {
@@ -227,11 +304,18 @@
                 .toLocaleLowerCase("tr-TR")
                 .replace(/[^\p{L}\s]/gu, " ");
 
-        const analyzeSentiment = () => {
+        const chooseMessage = (messages) =>
+            messages[Math.floor(Math.random() * messages.length)];
+
+        const setReaction = (emoji, message) => {
+            reactionEmojiEl.textContent = emoji;
+            reactionMessageEl.textContent = message;
+        };
+
+        const fallbackAnalyze = () => {
             const text = sentimentInput.value.trim();
             if (!text) {
-                reactionEmojiEl.textContent = "😼";
-                reactionMessageEl.textContent = "Önce birkaç kelime yaz, Mırmır seni dinliyor.";
+                setReaction("😼", "Önce birkaç kelime yaz, Mırmır seni dinliyor.");
                 return;
             }
 
@@ -250,32 +334,74 @@
             });
 
             if (positiveScore === 0 && negativeScore === 0) {
-                reactionEmojiEl.textContent = "😽";
-                reactionMessageEl.textContent =
-                    neutralMessages[Math.floor(Math.random() * neutralMessages.length)];
+                const message = chooseMessage(neutralMessages);
+                setReaction(message.emoji, message.text);
+                return;
+            }
+
+            if (Math.abs(positiveScore - negativeScore) <= 1 && positiveScore > 0 && negativeScore > 0) {
+                const message = chooseMessage(balancedMessages);
+                setReaction(message.emoji, message.text);
                 return;
             }
 
             if (positiveScore >= negativeScore) {
-                reactionEmojiEl.textContent = "😺";
-                reactionMessageEl.textContent = "Mırmır çok mutlu oldu! Böyle devam et 💖";
-            } else if (negativeScore - positiveScore >= 2) {
-                reactionEmojiEl.textContent = "🙀";
-                reactionMessageEl.textContent =
-                    "Mırmır endişelendi. Sana kocaman bir sarılma yolluyor 🤗";
+                const message = positiveScore - negativeScore >= 2 || positiveScore >= 3
+                    ? chooseMessage(positiveMessagesStrong)
+                    : chooseMessage(positiveMessagesSoft);
+                setReaction(message.emoji, message.text);
+            } else if (negativeScore - positiveScore >= 2 || negativeScore >= 3) {
+                const message = chooseMessage(negativeMessagesStrong);
+                setReaction(message.emoji, message.text);
             } else {
-                reactionEmojiEl.textContent = "😼";
-                reactionMessageEl.textContent =
-                    "Mırmır biraz gerginlik sezdi. Beraber derin nefes alalım.";
+                const message = chooseMessage(negativeMessagesSoft);
+                setReaction(message.emoji, message.text);
+            }
+        };
+
+        const analyzeSentiment = async () => {
+            const text = sentimentInput.value.trim();
+            if (!text) {
+                setReaction("😼", "Önce birkaç kelime yaz, Mırmır seni dinliyor.");
+                return;
+            }
+
+            if (!API_ENDPOINT) {
+                fallbackAnalyze();
+                return;
+            }
+
+            setReaction("⏳", "Mırmır düşünecek, biraz sabır...");
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ text }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API yanıtı başarısız: ${response.status}`);
+                }
+
+                const data = await response.json();
+                setReaction(data.emoji ?? "😺", data.message ?? "Mırmır mutlu!");
+            } catch (error) {
+                console.warn("API isteği başarısız oldu. Yerel analiz kullanılacak.", error);
+                fallbackAnalyze();
             }
         };
 
         button.addEventListener("click", blowKiss);
         catEl.addEventListener("click", blowKiss);
-        analyzeButton.addEventListener("click", analyzeSentiment);
+        analyzeButton.addEventListener("click", () => analyzeSentiment());
         sentimentInput.addEventListener("keydown", (event) => {
             if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-                analyzeSentiment();
+                analyzeSentiment().catch((error) => {
+                    console.error(error);
+                });
                 event.preventDefault();
             }
         });
